@@ -12,20 +12,23 @@ using namespace std;
 struct PCB
 {
     /* data */
-    pid_t pid;             // process id
-    pid_t ppid;            // parent process id
-    int inputFile;         // to hold the input file discriptor
-    int outputFile;        // to hold the input file discriptor
-    double arrivalTime;    // the arrival time
-    double completionTime; // the completeion time
+    pid_t pid;              // process id
+    pid_t ppid;             // parent process id
+    int inputFile;          // to hold the input file discriptor
+    int outputFile;         // to hold the input file discriptor
+    double arrivalTime;     // the arrival time
+    double completionTime;  // the completeion time
+    string processName;     // the name
+    double cpuTime;         // the cpu time
+    double inputOutputTime; // the i/o time
 };
 
 class Process
 {
-private:
+public:
     PCB myPCB;
 
 public:
-    Process(PCB P); // constructor
-    ~Process();     // destructor
+    // Process(PCB P); // constructor
+    // ~Process();     // destructor
 };
