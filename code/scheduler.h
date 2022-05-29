@@ -8,19 +8,16 @@
 
 using namespace std;
 
-// the cpu structure
-struct CPU
-{
-    /* data */
-};
-
-class Os_kernal
+class Scheduler
 {
 private:
     /* data */
 public:
-    Os_kernal(/* args */);
-    // the thread CPU
-    void *osCpu(void *cpu);
-    ~Os_kernal();
+    Scheduler(/* args */);
+    void idle();
+    void yeild();
+    void terminate();
+    void preempt();
+    void wakeUp();
+    ~Scheduler();
 };
