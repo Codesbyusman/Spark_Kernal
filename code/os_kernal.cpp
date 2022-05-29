@@ -38,6 +38,14 @@ int main(int argc, char *argv[])
 
                     // if the file was open closing it
                     inputFile.close();
+
+                    // CPU *cpu[3];
+
+                    // file has been read successfully creating the threads
+                    for (int i = 0; i < cpuCount; i++)
+                    {
+                         // pthread_create(&cpu[i].id, NULL, Spark_Kernal.OSCPU, (void *)cpu[i]);
+                    }
                }
                else
                {
