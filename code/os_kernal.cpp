@@ -7,33 +7,48 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 
-     Os_kernal Spark_Kernal;
-
      // main thread is the controller thread
      // creating other on specified
      if (argc > 1)
      {
-          ifstream inputFile;
-          string line; // for reading
+          // now the cpu creation
+          int cpuCount = stoi(argv[2]);
 
-          inputFile.open(argv[1]); // opening the file
-
-          if (inputFile.is_open())
+          if (!(cpuCount != 1 && cpuCount != 2 && cpuCount != 4))
           {
-               // while not end of file
-               getline(inputFile, line, '\n'); // taking the first line and ignoring as heading
+               Os_kernal Spark_Kernal;
+               ifstream inputFile;
+               string line; // for reading
 
-               // while end of file is not encountered
-               while (!inputFile.eof())
+               inputFile.open(argv[1]); // opening the file
+
+               if (inputFile.is_open())
                {
                     // while not end of file
-                    getline(inputFile, line, '\n');
-                    cout << line << endl;
-                    Spark_Kernal.makeProcess(line); // making the process
-               }
+                    getline(inputFile, line, '\n'); // taking the first line and ignoring as heading
 
-               // if the file was open closing it
-               inputFile.close();
+                    // while end of file is not encountered
+                    while (!inputFile.eof())
+                    {
+                         // while not end of file
+                         getline(inputFile, line, '\n');
+                         cout << line << endl;
+                         Spark_Kernal.makeProcess(line); // making the process
+                    }
+
+                    // if the file was open closing it
+                    inputFile.close();
+               }
+               else
+               {
+                    cout << "\n\t :::::: Wrong Input File ::::::" << endl;
+                    return 0;
+               }
+          }
+          else
+          {
+               cout << "\n\t :::::: Wrong CPU specified ::::::" << endl;
+               return 0;
           }
      }
      else

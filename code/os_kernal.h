@@ -46,6 +46,7 @@ public:
 
     void makeProcess(string info)
     {
+
         Process P; // the process
 
         stringstream splitThestring(info); // will use the stream and will take one word from the given string
@@ -56,7 +57,49 @@ public:
         // will make the process and will insert its pcb to new state
         P.myPCB.processName = word;
 
-        cout << endl;
+        splitThestring >> word; // extracting th priority
+        P.myPCB.pirority = word;
+
+        splitThestring >> word; // extracting the arrival
+        P.myPCB.arrivalTime = word;
+
+        splitThestring >> word; // extracting the type
+        P.myPCB.processType = word;
+
+        splitThestring >> word; // extracting the cpu time
+        P.myPCB.cpuTime = word;
+
+        // not specified
+        if (word == P.myPCB.processType)
+        {
+
+            P.myPCB.cpuTime = to_string((rand() % 10) + 1); // give some time between 10
+        }
+
+        splitThestring >> word; // extracting the i/o time
+        P.myPCB.inputOutputTime = word;
+
+        // input output not specified
+        if (word == P.myPCB.processType)
+        {
+            // if cpu then no input output
+            if (P.myPCB.processType == "C")
+            {
+                P.myPCB.inputOutputTime = to_string(-1); // no input output
+            }
+            else
+            {
+                P.myPCB.cpuTime = to_string((rand() % 10) + 1); // give some time between 5
+            }
+        }
+
+        // the process list
+        processes.push_back(P);
+
+        // the process is ready inserting in the new state -- its pcb
+        newState.push_back(P.myPCB);
+
+        P.printProcess();
     }
 
     bool processToreadyQueue(PCB);
