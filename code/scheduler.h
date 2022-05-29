@@ -14,5 +14,10 @@ private:
     /* data */
 public:
     Scheduler(/* args */);
+    void idle();
+    void yeild();
+    void terminate();
+    void preempt();
+    void wakeUp();
     ~Scheduler();
 };
