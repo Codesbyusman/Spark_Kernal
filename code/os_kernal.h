@@ -58,26 +58,32 @@ public:
         P.myPCB.processName = word;
 
         splitThestring >> word; // extracting th priority
-        P.myPCB.pirority = word;
+        cout << "kkk" << word << "KKK" << endl;
+        P.myPCB.pirority = stoi(word);
 
         splitThestring >> word; // extracting the arrival
-        P.myPCB.arrivalTime = word;
+        cout << "kkk" << word << "KKK" << endl;
+        P.myPCB.arrivalTime = stod(word);
 
         splitThestring >> word; // extracting the type
         P.myPCB.processType = word;
 
         splitThestring >> word; // extracting the cpu time
-        P.myPCB.cpuTime = word;
+        cout << "kkk" << word << "KKK" << endl;
 
         // not specified
         if (word == P.myPCB.processType)
         {
 
-            P.myPCB.cpuTime = to_string((rand() % 10) + 1); // give some time between 10
+            P.myPCB.cpuTime = (rand() % 10) + 1; // give some time between 10
+        }
+        else
+        {
+            P.myPCB.cpuTime = stod(word);
         }
 
         splitThestring >> word; // extracting the i/o time
-        P.myPCB.inputOutputTime = word;
+        cout << "kkk" << word << "KKK" << endl;
 
         // input output not specified
         if (word == P.myPCB.processType)
@@ -85,12 +91,16 @@ public:
             // if cpu then no input output
             if (P.myPCB.processType == "C")
             {
-                P.myPCB.inputOutputTime = to_string(-1); // no input output
+                P.myPCB.inputOutputTime = -1; // no input output
             }
             else
             {
-                P.myPCB.cpuTime = to_string((rand() % 10) + 1); // give some time between 5
+                P.myPCB.inputOutputTime = (rand() % 10) + 1; // give some time between 5
             }
+        }
+        else
+        {
+            P.myPCB.inputOutputTime = stod(word);
         }
 
         // the process list

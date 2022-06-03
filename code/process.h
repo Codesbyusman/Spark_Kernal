@@ -14,15 +14,15 @@ struct PCB
     /* data */
     pid_t pid;              // process id
     pid_t ppid;             // parent process id
-    string inputFile;       // to hold the input file discriptor
-    string outputFile;      // to hold the input file discriptor
-    string arrivalTime;     // the arrival time
-    string completionTime;  // the completeion time
+    // string inputFile;       // to hold the input file discriptor
+    // string outputFile;      // to hold the input file discriptor
+    double arrivalTime;     // the arrival time
+    double completionTime;  // the completeion time
     string processName;     // the name
-    string cpuTime;         // the cpu time
-    string inputOutputTime; // the i/o time
+    double cpuTime;         // the cpu time
+    double inputOutputTime; // the i/o time
     string processType;     // see cpu or i/o
-    string pirority;        // the prirority
+    int pirority;        // the prirority
 };
 
 class Process
