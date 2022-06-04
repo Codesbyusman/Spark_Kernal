@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
         pthread_join(cpuId[i], NULL);
     }
 
+    // pthread_join(updateId, NULL);
+
     return 0;
 }
 

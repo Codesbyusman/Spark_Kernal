@@ -20,10 +20,10 @@ using namespace std;
 struct CPU
 {
     /* data */
-    pthread_t id;       // the id of thread
-    string name;        // name of the cpu thread
-    PCB currentProcess; // the current running process
-    bool status;        // shows the status of if the status true the cpu is free
+    pthread_t id;        // the id of thread
+    string name;         // name of the cpu thread
+    PCB *currentProcess; // the current running process
+    bool status;         // shows the status of if the status true the cpu is free
 
     void displayCPU()
     {
@@ -36,35 +36,80 @@ struct CPU
         }
         else
         {
-            currentProcess.printProcess();
+            currentProcess->printProcess();
         }
 
         cout << endl;
     }
 };
 
+// the global memory
+list<CPU> kernalCPUs;      // the cpus in kernal
+Scheduler kernalScheduler; // the scheduler
+
+// the five states
+list<PCB> newState;        // the new state
+queue<PCB> readyQueue;     // the ready queue
+list<PCB> runningProcess;  // the running process --running state
+list<PCB> terminatedState; // the terminated one
+queue<PCB> blockedState;   // the i/o busy processes
+
+// for the thread making of the updating the ready queue
+void *updateReadyQueue(void *args)
+{
+    // inifite loop and will update in contrast the ready queue
+    while (1)
+    {
+
+        PCB theFirstinNew;
+        string compare;
+        // if time matches then going to the ready
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                if (!newState.empty())
+                {
+                    compare = to_string(i) + "." + to_string(j);
+                    theFirstinNew = newState.front();
+                    if (theFirstinNew.arrivalTime == stod(compare))
+                    {
+                        cout << i << "." << j << " " << theFirstinNew.arrivalTime << endl;
+                        newState.pop_front();
+                        // and pushing to the readyQueue
+                        readyQueue.push(theFirstinNew);
+                    }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
 struct Os_kernal
 {
 
-    list<CPU> kernalCPUs;      // the cpus in kernal
-    Scheduler kernalScheduler; // the scheduler
-
     // the iterator
-    list<CPU>::iterator arrayTraverse;
+    list<CPU>::iterator cpuTraverse;
+    list<PCB>::iterator pcbTraverse;
 
-    // the five states
+    Os_kernal()
+    {
 
-    list<PCB> newState;        // the new state
-    queue<PCB> readyQueue;     // the ready queue
-    list<PCB> runningProcess;  // the running process --running state
-    list<PCB> terminatedState; // the terminated one
-    queue<PCB> blockedState;   // the i/o busy processes
+        pthread_t updateId;
+        pthread_create(&updateId, NULL, updateReadyQueue, NULL);
+    }
 
     // making the process
-    void makeProcess(string info)
+    void makeProcess(string info, const int id)
     {
 
         PCB P; // the process
+
+        // the id and sub id's
+        P.pid = id;
+        P.ppid = getppid();
 
         stringstream splitThestring(info); // will use the stream and will take one word from the given string
         string word;                       // the splted word
@@ -139,16 +184,22 @@ struct Os_kernal
             // while not end of file
             getline(inputFile, line, '\n'); // taking the first line and ignoring as heading
 
+            int i = 0;
+
             // while end of file is not encountered
             while (!inputFile.eof())
             {
                 // while not end of file
                 getline(inputFile, line, '\n');
-                this->makeProcess(line); // making the process
+                this->makeProcess(line, i); // making the process
+                i++;
             }
 
             // if the file was open closing it
             inputFile.close();
+
+            // till now the new queue made thus sorting the queue
+            // newState.sort();
 
             // now making the cpus
             for (int i = 0; i < totalCPU; i++)
@@ -159,6 +210,7 @@ struct Os_kernal
                 C.name = "CPU - 0" + to_string(i + 1);
                 C.id = i;
                 C.status = true;
+                C.currentProcess = NULL;
 
                 kernalCPUs.push_back(C);
 
@@ -175,6 +227,18 @@ struct Os_kernal
         }
     }
 
+    // prining of the lists
+    void printLists(list<PCB> toPrint)
+    {
+        PCB iteration;
+
+        // checking for the cpus
+        for (pcbTraverse = toPrint.begin(); pcbTraverse != toPrint.end(); ++pcbTraverse)
+        {
+            iteration = *pcbTraverse;
+            iteration.printProcess();
+        }
+    }
     // will look for the free cpu
     CPU freeCpu(const int totalCpu)
     {
@@ -182,9 +246,9 @@ struct Os_kernal
         CPU returnThis;
 
         // checking for the cpus
-        for (arrayTraverse = kernalCPUs.begin(); arrayTraverse != kernalCPUs.end(); ++arrayTraverse)
+        for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
         {
-            returnThis = *arrayTraverse;
+            returnThis = *cpuTraverse;
             // if cpu is free return this
             if (returnThis.status)
             {

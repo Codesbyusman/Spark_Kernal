@@ -24,6 +24,7 @@ struct PCB
     string processType;      // see cpu or i/o
     int pirority;            // the prirority
     string state;            // will tell procees in which state
+
     void printProcess()
     {
         cout << "\n\t ::::: Details of the Process :::::\n"
