@@ -22,6 +22,7 @@ using namespace std;
 // A PCB Struct to store the information if the processes
 //#include "os-kernel.cpp"
 pthread_mutex_t mutex_locked_thread;
+pthread_mutex_t mutex_locked_thread1;
 // For the Input Arguments
 int CPU_CORES = 0;
 char ALGO = 'f';
@@ -41,6 +42,7 @@ public:
     void send_running_queue_to_waiting_queue(PCB);
     void send_waiting_queue_to_ready_queue();
     static void *helper_send_waiting_queue_to_ready_queue(void *p);
+    void terminate_the_process_to_terminated_queue(PCB obj);
 };
 // Following are the Main Queues that will be used in this process
 list<PCB> qlist;
@@ -191,32 +193,44 @@ void Processer::Algo_First_come_First_server(PCB pcb_obj, Scheduler *scheduler_p
         //     So,    1 + 1 = 2
         TOTAL_EXECUTION_TIME = TOTAL_EXECUTION_TIME + 2;
         // drcreasing the i/o by one because it' going for input
-        pcb_obj.input_output_time=(pcb_obj.input_output_time)-1;
+        pcb_obj.input_output_time = (pcb_obj.input_output_time) - 1;
         // just assuming it will go to i/o after 1 sec
-         pcb_obj.cpu_time=(pcb_obj.cpu_time)-1;
+        pcb_obj.cpu_time = (pcb_obj.cpu_time) - 1;
         // send the Process to the waiting Queue
         // queue_waiting.push(pcb_obj);
+        pthread_mutex_lock((&mutex_locked_thread1));
         queue_running.pop();
         queue_running.push(pcb_obj);
+        pthread_mutex_unlock((&mutex_locked_thread1));
         scheduler_ptr->send_running_queue_to_waiting_queue(pcb_obj);
     }
     else
     {
-        TOTAL_EXECUTION_TIME = TOTAL_EXECUTION_TIME + pcb_obj.cpu_time;
-        cout << "\n -----------COMPLETED EXECUTION -------------\n";
-        cout << pcb_obj.process_name  << "\n" << "---------------------";
+        scheduler_ptr->terminate_the_process_to_terminated_queue(pcb_obj);
     }
 }
 
 //-----------------------Scheduler--------------------------------//
-
+void Scheduler::terminate_the_process_to_terminated_queue(PCB pcb_obj)
+{
+    // get the process executed to the Terminated queue
+    queue_terminated.push(queue_running.front());
+    queue_running.pop();
+    // Now once it's terminated show and GOOOO
+    TOTAL_EXECUTION_TIME = TOTAL_EXECUTION_TIME + pcb_obj.cpu_time;
+    cout << "\n -----------COMPLETED EXECUTION -------------\n";
+    cout << pcb_obj.process_name << "\n"
+         << "-----------------------------------";
+}
 void Scheduler::send_running_queue_to_waiting_queue(PCB obj)
 {
     // This function will send the running Queue to the waiting Queue
     PCB debug = queue_running.front();
-    cout << "\n QUEUE Runnong " << debug.process_name << " " << debug.input_output_time << "   " << debug.cpu_time ;
+    cout << "\n QUEUE Running " << debug.process_name << " " << debug.input_output_time << "   " << debug.cpu_time;
+    pthread_mutex_lock((&mutex_locked_thread1));
     queue_waiting.push(queue_running.front());
     queue_running.pop();
+    pthread_mutex_unlock((&mutex_locked_thread1));
 }
 void Scheduler::send_waiting_queue_to_ready_queue()
 {
@@ -241,7 +255,7 @@ void *Scheduler::helper_send_waiting_queue_to_ready_queue(void *p)
         // if waiting queue is not empty the do the following
         if (!queue_waiting.empty())
         {
-            
+
             cout << "\n RUNNING IN THE BACKGROUND FOR NO REASON";
             queue_ready.push(queue_waiting.front());
             queue_waiting.pop();
@@ -433,7 +447,7 @@ void Kernel::Implement_start(string file_name)
     string process = "";
     // open the file
     fstream newfile;
-    newfile.open(file_name);
+    newfile.open("processes.txt");
     // now read information
     if (newfile.is_open())
     { // checking whether the file is open
