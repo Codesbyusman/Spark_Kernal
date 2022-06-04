@@ -33,8 +33,24 @@ int main(int argc, char *argv[])
                 // starting the kernal
                 Spark_Kernal.start(argv[1], &cpuProcessors, cpuId, cpuCount);
 
+                sleep(1);
+
                 // the scdeuling process
-                Spark_Kernal.scheduleIt(&cpuProcessors, cpuCount);
+                if (*argv[3] == 'r')
+                {
+                    // if round robin then give the time slice
+                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], stoi(argv[4]));
+                }
+                else if (*argv[3] == 'f' || *argv[3] == 'p')
+                {
+                    // the time slice will be -1
+                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], -1);
+                }
+                else
+                {
+                    cout << "\n\t\t       :::::::: Wrong Scheduling policy :::::::: " << endl;
+                    goto error;
+                }
             }
             else
             {

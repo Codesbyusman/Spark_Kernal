@@ -7,52 +7,41 @@
 #include <sys/wait.h>
 #include <bits/stdc++.h>
 
-#include "process.h"
-#include "scheduler.h"
-
 // the link list
 #include <list>
 #include <queue>
 
 using namespace std;
 
-// the cpu structure
-struct CPU
-{
-    /* data */
-    pthread_t id;        // the id of thread
-    string name;         // name of the cpu thread
-    PCB *currentProcess; // the current running process
-    bool status;         // shows the status of if the status true the cpu is free
+#include "scheduler.h"
 
-    void displayCPU()
-    {
-        cout << "\n\n id : " << id << endl;
-        cout << "name : " << name << endl;
-        cout << "status : " << status << endl;
-        if (status)
-        {
-            cout << "Idle Process" << endl;
-        }
-        else
-        {
-            currentProcess->printProcess();
-        }
+// // the cpu structure
+// struct CPU
+// {
+//     /* data */
+//     pthread_t id;        // the id of thread
+//     string name;         // name of the cpu thread
+//     PCB *currentProcess; // the current running process
+//     // PCB *previousProcess; // the previous excuted
+//     bool status; // shows the status of if the status true the cpu is free
 
-        cout << endl;
-    }
-};
+//     void displayCPU()
+//     {
+//         cout << "\n\n id : " << id << endl;
+//         cout << "name : " << name << endl;
+//         cout << "status : " << status << endl;
+//         if (status)
+//         {
+//             cout << "Idle Process" << endl;
+//         }
+//         else
+//         {
+//             currentProcess->printProcess();
+//         }
 
-// the global memory
-list<CPU> kernalCPUs;      // the cpus in kernal
-Scheduler kernalScheduler; // the scheduler
-
-// the five states
-list<PCB> newState;        // the new state
-queue<PCB> readyQueue;     // the ready queue
-list<PCB> runningProcess;  // the running process --running state
-list<PCB> terminatedState; // the terminated one
-queue<PCB> blockedState;   // the i/o busy processes
+//         cout << endl;
+//     }
+// };
 
 // for the thread making of the updating the ready queue
 void *updateReadyQueue(void *args)
@@ -90,6 +79,8 @@ void *updateReadyQueue(void *args)
 struct Os_kernal
 {
 
+    Scheduler kernalScheduler; // the scheduler
+
     // the iterator
     list<CPU>::iterator cpuTraverse;
     list<PCB>::iterator pcbTraverse;
@@ -97,7 +88,6 @@ struct Os_kernal
     Os_kernal()
     {
 
-        pthread_t updateId;
         pthread_create(&updateId, NULL, updateReadyQueue, NULL);
     }
 
@@ -107,12 +97,12 @@ struct Os_kernal
 
         PCB P; // the process
 
-        // the id and sub id's
-        P.pid = id;
-        P.ppid = getppid();
+        P.pid = id;         // the id
+        P.ppid = getppid(); // the ppid
+        P.state = "new";    // state of the prcess
 
         stringstream splitThestring(info); // will use the stream and will take one word from the given string
-        string word;                       // the splted word
+        string word;                       // the splited word
 
         splitThestring >> word; // extracting the name of the process
 
@@ -201,10 +191,11 @@ struct Os_kernal
             // till now the new queue made thus sorting the queue
             // newState.sort();
 
+            CPU C;
+
             // now making the cpus
             for (int i = 0; i < totalCPU; i++)
             {
-                CPU C;
 
                 // making the cpu
                 C.name = "CPU - 0" + to_string(i + 1);
@@ -217,8 +208,19 @@ struct Os_kernal
                 // creating threads
                 pthread_create(&cpuIds[i], NULL, functionPointer, &C);
 
-                sleep(1);
+                // sleep(1);
             }
+
+            // check queues
+            // cout << "::::::: Inready Qyeye ::::::::" << endl;
+            // PCB q;
+            // while (!readyQueue.empty())
+            // {
+            //     q = readyQueue.front();
+            //     readyQueue.pop();
+
+            //     q.printProcess();
+            // }
         }
         else
         {
@@ -239,6 +241,7 @@ struct Os_kernal
             iteration.printProcess();
         }
     }
+
     // will look for the free cpu
     CPU freeCpu(const int totalCpu)
     {
@@ -261,7 +264,27 @@ struct Os_kernal
         return returnThis;
     }
 
-    void scheduleIt(void *(*functionPointer)(void *), int totalCPU)
+    void scheduleIt(const int totalCPU, char policy, int timeSlice)
     {
+
+        cout << "scheduling the " << policy << " with time slice " << timeSlice << endl;
+
+        cout << "y loo" << endl;
+
+        if (policy == 'f')
+        {
+
+            kernalScheduler.FCFS(totalCPU);
+        }
+        else if (policy == 'r')
+        {
+        }
+        else if (policy == 'p')
+        {
+        }
+        else
+        {
+            cout << "bhaar ma jao" << endl;
+        }
     }
 };
