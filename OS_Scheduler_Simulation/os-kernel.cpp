@@ -18,12 +18,18 @@
 #include <mutex>
 #include <list>
 #include <iomanip>
+#include <semaphore.h>
+#include <sstream>
+#include <fcntl.h>
 //#include "os-kernel.h"
 using namespace std;
 // A PCB Struct to store the information if the processes
 //#include "os-kernel.cpp"
 pthread_mutex_t mutex_locked_thread;
 pthread_mutex_t mutex_locked_thread1;
+// using samphore for multithreading
+sem_t samphore_multithreading;
+
 // For the Input Arguments
 int CPU_CORES = 0;
 char ALGO = 'f';
@@ -44,6 +50,7 @@ public:
     void send_waiting_queue_to_ready_queue();
     static void *helper_send_waiting_queue_to_ready_queue(void *p);
     void terminate_the_process_to_terminated_queue(PCB obj);
+    void send_running_queue_to_ready_queue(PCB obj);
 };
 // Following are the Main Queues that will be used in this process
 list<PCB> qlist;
@@ -56,9 +63,10 @@ queue<PCB> queue_terminated;
 int TOTAL_EXECUTION_TIME = 0;
 int TOTAL_CONTEXT_SWICTING = 0;
 int TOTAL_TIME_READY_STATE = 0;
-
+int TIME_SLICE = 1;
 pthread_t kernel_print_output;
-
+priority_queue<PCB> queue_ready_proprity;
+string OUTPUT_FILE_NAME="";
 struct PCB
 {
     // making the varibles for PCB
@@ -80,6 +88,10 @@ struct PCB
         input_output_time = 0;
     }
 
+    bool operator<(const PCB &rhs) const
+    {
+        return priority < rhs.priority;
+    }
     // A function to assign the values of the file to the PCB
     void assign_values_to_pcb_variable(string process_info, PCB &wow)
     {
@@ -178,6 +190,16 @@ void *helper_Print_Output(void *p)
     // FOURTH COLUMN SHOWS THE I/O QUEUE PROCESS NAME....
     while (1)
     {
+        // if all the queues are empty it means program is terminated
+
+        if ((queue_new.empty() && queue_ready.empty() && queue_waiting.empty() && queue_running.empty()))
+        {
+            cout << "\nTOTAL CONTEXT SWITCHING : " << TOTAL_CONTEXT_SWICTING << endl;
+            cout << "\nTOTAL EXECUTION TIME : " << TOTAL_EXECUTION_TIME << endl;
+            cout << "\nTOTAL READY STATE : " << TOTAL_TIME_READY_STATE << endl;
+            exit(0);
+        }
+
         //  cout << "\n Inside the thread \n";
 
         //   cout << "I am causing Problems: " << pthread_self();
@@ -204,11 +226,17 @@ void *helper_Print_Output(void *p)
             {
                 io_process_running = queue_waiting.front().process_name;
             }
+            // Open up a file
+            int file=open("results.txt",O_WRONLY || O_CREAT , 0777);
+            // save the original descriptor
+            int cout_descriptor = dup(1);
+            // display on terminal
             cout << setw(10) << time << setw(10) << queue_running.size() << setw(10) << queue_ready.size() << setw(10) << queue_waiting.size() << setw(10) << cpu_process_running << setw(20) << io_process_running
                  << "\n";
-
-            // sleep(1);
             cout << "\n\n";
+            // Now change the Descriptor
+            dup2(file,cout_descriptor);
+            // Display on 
             //  cout << "am not running duudeee";
             sleep(2);
             break;
@@ -244,28 +272,50 @@ void *helper_Print_Output(void *p)
             sleep(2);
             break;
         }
-        case 3:
+        case 4:
         {
             cout << "\n\n";
             cout << "\n -----------------------------ORIGINAL OUTPUT--------------------------\n";
-            cout << setw(10) << "Time" << setw(10) << "RU" << setw(10) << "RE" << setw(10) << "WA" << setw(10) << "CPU 1" << setw(10) << "CPU 2"<< setw(10) << "CPU 3"<< setw(10) << "CPU 4" << setw(20) << "I/O"
+            cout << setw(10) << "Time" << setw(10) << "RU" << setw(10) << "RE" << setw(10) << "WA" << setw(10) << "CPU 1" << setw(10) << "CPU 2" << setw(10) << "CPU 3" << setw(10) << "CPU 4" << setw(20) << "I/O"
                  << "\n";
             static int time = 0;
             time++;
 
-            string cpu_process_running = "NULL";
+            string cpu_process_running_1 = "NULL";
+            string cpu_process_running_2 = "NULL";
+            string cpu_process_running_3 = "NULL";
+            string cpu_process_running_4 = "NULL";
             string io_process_running = "NULL";
             // checking if qeue is empty or not
             if (!queue_running.empty())
             {
-                cpu_process_running = queue_running.front().process_name;
+                queue<PCB> temp;
+                temp = queue_running;
+
+                cpu_process_running_1 = temp.front().process_name;
+                temp.pop();
+                if (!temp.empty())
+                {
+                    cpu_process_running_2 = temp.front().process_name;
+                    temp.pop();
+                }
+                if (!temp.empty())
+                {
+                    cpu_process_running_3 = temp.front().process_name;
+                    temp.pop();
+                }
+                if (!temp.empty())
+                {
+                    cpu_process_running_4 = temp.front().process_name;
+                    temp.pop();
+                }
             }
             // checking if the queue waiting is not empty
             if (!queue_waiting.empty())
             {
                 io_process_running = queue_waiting.front().process_name;
             }
-            cout << setw(10) << time << setw(10) << queue_running.size() << setw(10) << queue_ready.size() << setw(10) << queue_waiting.size() << setw(10) << cpu_process_running << setw(10) << cpu_process_running << setw(10) << "CPU 3" << setw(10) << "CPU 4" << setw(20) << io_process_running
+            cout << setw(10) << time << setw(10) << queue_running.size() << setw(10) << queue_ready.size() << setw(10) << queue_waiting.size() << setw(10) << cpu_process_running_1 << setw(10) << cpu_process_running_2 << setw(10) << cpu_process_running_3 << setw(10) << cpu_process_running_4 << setw(20) << io_process_running
                  << "\n";
 
             // sleep(1);
@@ -289,13 +339,111 @@ public:
     // A Process PCB values will be sent to the Algo and the Algo will then Execute
     // the Process
     void Algo_First_come_First_server(PCB, Scheduler *);
+    void Algo_Round_Robin(PCB, Scheduler *);
+    void Algo_Premitive_Priority(PCB, Scheduler *);
 };
+void Processer::Algo_Round_Robin(PCB pcb_obj, Scheduler *scheduler_ptr)
+{
+
+    // Here we have to PERFORM ROUND ROBIN YAYAYA
+    cout << "\n Process " << pcb_obj.process_name << " has To be Executed in " << pcb_obj.cpu_time << " with " << pcb_obj.input_output_time << " I/O";
+
+    if (pcb_obj.input_output_time > 0)
+    {
+        // send the process to the Waiting Queue ///
+        TOTAL_CONTEXT_SWICTING++;
+        // adding 2 cuz
+        // -- CPU TIME + I/O time (Assume 1 sec)
+        //     So,    1 + 1 = 2
+        TOTAL_EXECUTION_TIME = TOTAL_EXECUTION_TIME + 2;
+        // drcreasing the i/o by one because it' going for input
+        pcb_obj.input_output_time = (pcb_obj.input_output_time) - 1;
+        // just assuming it will go to i/o after 1 sec
+        pcb_obj.cpu_time = (pcb_obj.cpu_time) - 1;
+        // send the Process to the waiting Queue
+        // queue_waiting.push(pcb_obj);
+        pthread_mutex_lock((&mutex_locked_thread1));
+        sleep(1);
+        queue_running.pop();
+        queue_running.push(pcb_obj);
+        pthread_mutex_unlock((&mutex_locked_thread1));
+        scheduler_ptr->send_running_queue_to_waiting_queue(pcb_obj);
+    }
+    // if the cpu time is greater than the time slice
+    else if (pcb_obj.cpu_time > TIME_SLICE)
+    {
+        // then Run the Process for particular time slice and Send back to the Ready Queue
+        // Here we have to execute the Process for the Given Time Slice..
+        pcb_obj.cpu_time = pcb_obj.cpu_time - TIME_SLICE;
+        pthread_mutex_lock((&mutex_locked_thread1));
+        sleep(1);
+        queue_running.pop();
+        queue_running.push(pcb_obj);
+        pthread_mutex_unlock((&mutex_locked_thread1));
+
+        // now send this process to the Ready Queue again :)
+        scheduler_ptr->send_running_queue_to_ready_queue(pcb_obj);
+    }
+    else
+    {
+        // it means that the Process will be executed in the time slice so terminate it lol
+        scheduler_ptr->terminate_the_process_to_terminated_queue(pcb_obj);
+    }
+}
+
+// Take Pcb object and Run the Process
+void Processer::Algo_Premitive_Priority(PCB pcb_obj, Scheduler *scheduler_ptr)
+{
+    // Here we will Perform the Premitive Priority
+
+    // send for the input output..
+    if (pcb_obj.input_output_time > 0)
+    {
+        // send the process to the Waiting Queue ///
+        TOTAL_CONTEXT_SWICTING++;
+        // adding 2 cuz
+        // -- CPU TIME + I/O time (Assume 1 sec)
+        //     So,    1 + 1 = 2
+        TOTAL_EXECUTION_TIME = TOTAL_EXECUTION_TIME + 2;
+        // drcreasing the i/o by one because it' going for input
+        pcb_obj.input_output_time = (pcb_obj.input_output_time) - 1;
+        // just assuming it will go to i/o after 1 sec
+        pcb_obj.cpu_time = (pcb_obj.cpu_time) - 1;
+        // send the Process to the waiting Queue
+        // queue_waiting.push(pcb_obj);
+        pthread_mutex_lock((&mutex_locked_thread1));
+        sleep(1);
+        queue_running.pop();
+        queue_running.push(pcb_obj);
+        pthread_mutex_unlock((&mutex_locked_thread1));
+        scheduler_ptr->send_running_queue_to_waiting_queue(pcb_obj);
+    } // if the cpu time is there and the Process is not completed
+    else if (pcb_obj.cpu_time <= 0)
+    {
+        // Send the Process backkkkkk to The Ready Queue...
+        // I have set the TIME CLICE TO 1 -- for this process by default
+        // Here we have to execute the Process for the Given Time Slice..
+        pcb_obj.cpu_time = pcb_obj.cpu_time - TIME_SLICE;
+        pthread_mutex_lock((&mutex_locked_thread1));
+        sleep(1);
+        queue_running.pop();
+        queue_running.push(pcb_obj);
+        pthread_mutex_unlock((&mutex_locked_thread1));
+
+        // now send this process to the Ready Queue again :)
+        scheduler_ptr->send_running_queue_to_ready_queue(pcb_obj);
+    }
+    else
+    {
+        scheduler_ptr->terminate_the_process_to_terminated_queue(pcb_obj);
+    }
+}
 // Take Pcb object and Run the Process
 void Processer::Algo_First_come_First_server(PCB pcb_obj, Scheduler *scheduler_ptr)
 {
 
     // Here we have to Perform the FCFS
-    cout << "\n Process " << pcb_obj.process_name << " has To be Executed in " << pcb_obj.cpu_time << " with " << pcb_obj.input_output_time << " I/O";
+    //  cout << "\n Process " << pcb_obj.process_name << " has To be Executed in " << pcb_obj.cpu_time << " with " << pcb_obj.input_output_time << " I/O";
 
     // Here i will be counting the Total Execution time
 
@@ -314,6 +462,7 @@ void Processer::Algo_First_come_First_server(PCB pcb_obj, Scheduler *scheduler_p
         // send the Process to the waiting Queue
         // queue_waiting.push(pcb_obj);
         pthread_mutex_lock((&mutex_locked_thread1));
+        sleep(1);
         queue_running.pop();
         queue_running.push(pcb_obj);
         pthread_mutex_unlock((&mutex_locked_thread1));
@@ -326,11 +475,26 @@ void Processer::Algo_First_come_First_server(PCB pcb_obj, Scheduler *scheduler_p
 }
 
 //-----------------------Scheduler--------------------------------//
+
+void Scheduler::send_running_queue_to_ready_queue(PCB pcb_obj)
+{
+    // Here the Thread will send the Running Process to the
+    pthread_mutex_lock(&mutex_locked_thread1);
+    // Now we have to Push to ready and remove from running with new time slices
+    TOTAL_CONTEXT_SWICTING++;
+    queue_ready.push(queue_running.front());
+    queue_running.pop();
+    pthread_mutex_unlock(&mutex_locked_thread1);
+}
 void Scheduler::terminate_the_process_to_terminated_queue(PCB pcb_obj)
 {
     // get the process executed to the Terminated queue
+
+    sleep(1);
+    pthread_mutex_lock((&mutex_locked_thread1));
     queue_terminated.push(queue_running.front());
     queue_running.pop();
+    pthread_mutex_unlock((&mutex_locked_thread1));
     // Now once it's terminated show and GOOOO
     TOTAL_EXECUTION_TIME = TOTAL_EXECUTION_TIME + pcb_obj.cpu_time;
     cout << "\n -----------COMPLETED EXECUTION -------------\n";
@@ -339,6 +503,7 @@ void Scheduler::terminate_the_process_to_terminated_queue(PCB pcb_obj)
 }
 void Scheduler::send_running_queue_to_waiting_queue(PCB obj)
 {
+    TOTAL_CONTEXT_SWICTING++;
     // This function will send the running Queue to the waiting Queue
     PCB debug = queue_running.front();
     cout << "\n QUEUE Running " << debug.process_name << " " << debug.input_output_time << "   " << debug.cpu_time;
@@ -351,7 +516,7 @@ void Scheduler::send_waiting_queue_to_ready_queue()
 {
     // if waiting queue is empty then wait for something
     //  this will be a thread working in it's own zone
-
+    TOTAL_TIME_READY_STATE++;
     // ceating a thread
     pthread_t waiting_queue_thread_id;
     if (pthread_create(&waiting_queue_thread_id, NULL, Scheduler::helper_send_waiting_queue_to_ready_queue, NULL) != 0)
@@ -371,8 +536,9 @@ void *Scheduler::helper_send_waiting_queue_to_ready_queue(void *p)
         if (!queue_waiting.empty())
         {
 
-            cout << "\n RUNNING IN THE BACKGROUND FOR NO REASON";
+            // cout << "\n RUNNING IN THE BACKGROUND FOR NO REASON";
             pthread_mutex_lock(&mutex_locked_thread1);
+             TOTAL_CONTEXT_SWICTING++;
             queue_ready.push(queue_waiting.front());
             queue_waiting.pop();
             pthread_mutex_unlock(&mutex_locked_thread1);
@@ -451,22 +617,57 @@ void Scheduler::fill_the_scheduler_queue(int cpu_cores)
     while (1)
     {
         pthread_mutex_lock(&mutex_locked_thread);
+        // sem_wait(&samphore_multithreading);
         sleep(1);
         // locked so one thread can write to the Queue at a time
-        cout << "\nThread waiting: " << pthread_self() << "\n";
+        //    cout << "\nThread waiting: " << pthread_self() << "\n";
         while (queue_ready.empty())
             ;
-        cout << " \nThread is Running : " << pthread_self() << "\n";
+        //   cout << " \nThread is Running : " << pthread_self() << "\n";
         // get the PCB and give it to the Processer
         PCB tmp_obj = queue_ready.front();
         queue_ready.pop();
         if (ALGO == 'f')
         {
-            cout << "Running the FCFS";
+            //   cout << "Running the FCFS";
             // GETTING TO THE RUNNING STATE
             TOTAL_CONTEXT_SWICTING++;
             queue_running.push(tmp_obj);
             my_cpu->Algo_First_come_First_server(tmp_obj, this);
+        }
+        else if (ALGO == 'r')
+        {
+            TOTAL_CONTEXT_SWICTING++;
+            // Alright We got the Process in the ready Queue. Now we will send it to the Running Queue
+            queue_running.push(tmp_obj);
+            my_cpu->Algo_Round_Robin(tmp_obj, this);
+        }
+        else
+        {
+            // This is Preimitive Prority
+            TOTAL_CONTEXT_SWICTING++;
+            // We have to check the Prority of the Process before we send the Process to the Running Queue.
+
+            // Iterate the Ready Queue for Largest Priority and send that to the Running Queue
+
+            queue<PCB> tmp_queue = queue_ready;
+
+            // Now we have to push everything in queue_Ready to the Prority Queue
+            while (!tmp_queue.empty())
+            {
+                queue_ready_proprity.push(tmp_queue.front());
+                tmp_queue.pop();
+            }
+
+            // Now we have a ready Queue where Priority Processes will always be at the top..
+
+            // save the object
+            tmp_obj = queue_ready_proprity.top();
+            // send the top one to the Running state
+            queue_running.push(queue_ready_proprity.top());
+            queue_ready_proprity.pop();
+            // Run the Algooo
+            my_cpu->Algo_Premitive_Priority(tmp_obj, this);
         }
         // priority_queue<PCB> queue_new;
         // Now we have to push into the queue using the arriaval time
@@ -626,7 +827,7 @@ int main(int argc, char *argv[])
     Kernel spark_kernal;
     cout << "\n Checking for Argumnets \n";
     // checking for the erros at the arguments
-    if (argc < 5)
+    if (argc < 5 || argc > 6)
     {
         cout << "\n Please Use the Following Format \n";
         cout << "\nos-kernel <Input file> <# CPUs> r <timeslice> <Output file>\n";
@@ -635,9 +836,11 @@ int main(int argc, char *argv[])
     }
     else
     {
-        cout << argv[3];
+        //  cout << argv[3];
         // checking some argument..
-
+        CPU_CORES = stoi(argv[2]);
+        ALGO = *argv[3];
+        sem_init(&samphore_multithreading, 0, CPU_CORES);
         if (!(*(argv[3]) == 'f' || *(argv[3]) == 'p' || *(argv[3]) == 'r'))
         {
             cout << "\n Invalid Aurgumnets \n";
@@ -645,8 +848,18 @@ int main(int argc, char *argv[])
         }
         else
         {
-            // this is the Algo we are going to RUNnnn
-            ALGO = *(argv[3]);
+            if (*argv[3] == 'r')
+            {
+                ALGO = *argv[3];
+                TIME_SLICE = stoi(argv[4]);
+                OUTPUT_FILE_NAME = argv[5];
+            }
+            else
+            {
+                // this is the Algo we are going to RUNnnn
+                ALGO = *(argv[3]);
+                 OUTPUT_FILE_NAME = argv[4];
+            }
         }
         // reading the arguments
         for (int i = 0; i < argc; ++i)
@@ -686,6 +899,8 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    sem_destroy(&samphore_multithreading);
     pthread_exit(0);
     return 0;
 }
