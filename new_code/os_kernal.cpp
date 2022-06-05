@@ -99,23 +99,30 @@ void *cpuProcessors(void *args)
     CPU *theCpu = (CPU *)args;
 
     list<CPU>::iterator cpuTraverse;
-    CPU iterating;
-
-    // // checking for the cpus
-    // for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
-    // {
-    //     iterating = *cpuTraverse;
-
-    //     if (iterating.id == theCpu->id)
-    //     {
-    //         *theCpu = *cpuTraverse;
-    //         break;
-    //     }
-    // }
 
     while (poped < processCount)
     {
-        sleep(1);
+        CPU iterate;
+        // checking for the cpus
+        for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); cpuTraverse++)
+        {
+            iterate = *cpuTraverse;
+            if (theCpu->id == iterate.id)
+            {
+                *theCpu = *cpuTraverse;
+                break;
+            }
+        }
+
+        sleep(2);
+
+        // cout << theCpu->name << " thread " << endl;
+        pthread_mutex_lock(&cpuLock);
         Spark_Kernal.kernalScheduler.freeTheCPU(*theCpu);
+        if (theCpu->currentProcess != NULL)
+            Spark_Kernal.kernalScheduler.terminate(*theCpu->currentProcess);
+        pthread_mutex_unlock(&cpuLock);
     }
+
+    return NULL;
 }

@@ -68,57 +68,94 @@ struct Scheduler
             // data printing
             cout << setw(6) << (timeStart) << setw(10) << readyQueue.size() << setw(10) << runningProcess.size() << setw(10) << blockedState.size();
 
-            // CPU cpuPrint;
+            CPU cpuPrint;
 
-            for (int i = 0; i < cpuCount; i++)
+            // checking for the cpus
+            for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
             {
-                cout << setw(10) << "CPU " << i + 1;
+                cpuPrint = *cpuTraverse;
+                // cpuPrint = *cpuTraverse;
+                if (cpuPrint.currentProcess != NULL)
+                    cout << setw(15) << cpuPrint.currentProcess->processName;
+                else
+                    cout << setw(15) << "idle";
             }
-            // // checking for the cpus
-            // for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
-            // {
-            //     // cpuPrint = *cpuTraverse;
-            //     // cout << setw(10) << cpuPrint.currentProcess->processName;
-            // }
             cout << setw(20) << "NULL" << endl;
 
             CPU Cpu;
 
             // looking for the cpu
-            while (!freeCpu(cpuCount, Cpu))
+            while (!((runningProcess.size() < cpuCount) && freeCpu(cpuCount, Cpu)))
                 ;
+
             if (!readyQueue.empty())
             {
-
                 PCB process = readyQueue.front();
                 readyQueue.pop();
                 poped++;
                 contextSwitch(Cpu, &process);
-                terminate();
+
                 timeStart += process.cpuTime;
             }
-                }
+        }
 
         // data printing
         cout << setw(6) << (timeStart) << setw(10) << readyQueue.size() << setw(10) << runningProcess.size() << setw(10) << blockedState.size();
 
-        // CPU cpuPrint;
+        CPU cpuPrint;
 
-        for (int i = 0; i < cpuCount; i++)
+        // checking for the cpus
+        for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
         {
-            cout << setw(10) << "CPU " << i + 1;
+            cpuPrint = *cpuTraverse;
+            // cpuPrint = *cpuTraverse;
+            if (cpuPrint.currentProcess != NULL)
+                cout << setw(15) << cpuPrint.currentProcess->processName;
+            else
+                cout << setw(15) << "idle";
         }
-        // // checking for the cpus
-        // for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
-        // {
-        //     // cpuPrint = *cpuTraverse;
-        //     // cout << setw(10) << cpuPrint.currentProcess->processName;
-        // }
         cout << setw(20) << "NULL" << endl;
     }
 
-    void terminate()
+    void terminate(PCB process)
     {
+        process.state = "completed";
+        process.completionTime = timeStart;
+
+        list<PCB>::iterator iterate;
+        PCB p;
+
+        // checking for the cpus
+        for (iterate = runningProcess.begin(); iterate != runningProcess.end(); ++iterate)
+        {
+            p = *iterate;
+            if (p.pid == process.pid)
+            {
+                if (!runningProcess.empty())
+                {
+                    // cout << p.pid << endl;
+
+                    runningProcess.pop_back();
+                    terminatedState.push_back(process);
+                    return;
+                    // printLists(runningProcess);
+                }
+            }
+        }
+    }
+
+    // prining of the lists
+    void printLists(list<PCB> toPrint)
+    {
+        PCB iteration;
+        list<PCB>::iterator pcbTraverse;
+
+        // checking for the cpus
+        for (pcbTraverse = toPrint.begin(); pcbTraverse != toPrint.end(); pcbTraverse++)
+        {
+            iteration = *pcbTraverse;
+            iteration.printProcess();
+        }
     }
 
     void contextSwitch(CPU &assignTothis, PCB *process)
@@ -127,12 +164,23 @@ struct Scheduler
         if (process != NULL)
         {
 
-            assignTothis.currentProcess = process;
-            assignTothis.currentProcess->state = "running";
-            assignTothis.status = true;
-            contextSwitchCount++;
+            CPU iterate;
+            // checking for the cpus
+            for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); cpuTraverse++)
+            {
+                iterate = *cpuTraverse;
 
-            runningProcess.push_back(*process);
+                if (assignTothis.id == iterate.id)
+                {
+                    assignTothis.currentProcess = process;
+                    assignTothis.currentProcess->state = "running";
+                    assignTothis.status = true;
+                    contextSwitchCount++;
+                    *cpuTraverse = assignTothis;
+
+                    runningProcess.push_back(*process);
+                }
+            }
         }
     }
 
@@ -179,9 +227,8 @@ struct Scheduler
 
                 // as found thus make that cpu is occupied
                 required.status = true;
-                required.currentProcess = NULL;
+                // required.currentProcess = NULL;
                 *cpuTraverse = required;
-
                 return true;
             }
         }

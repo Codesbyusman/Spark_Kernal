@@ -35,7 +35,9 @@ void *updateReadyQueue(void *args)
 
                 newState.pop_front();
                 // and pushing to the readyQueue
+                pthread_mutex_lock(&cpuLock);
                 readyQueue.push(theFirstinNew);
+                pthread_mutex_unlock(&cpuLock);
             }
         }
     }
