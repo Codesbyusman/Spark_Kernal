@@ -240,13 +240,16 @@ struct Os_kernal
         }
         else if (policy == 'r')
         {
+            kernalScheduler.roundRobbin(totalCPU, outputFile, timeSlice);
         }
         else if (policy == 'p')
         {
+            kernalScheduler.Piority(totalCPU, outputFile);
         }
         else
         {
-            cout << "bhaar ma jao" << endl;
+            cout << "\n\t\t ::::: no algo input exist ::::::: \n"
+                 << endl;
         }
     }
 };
