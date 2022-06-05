@@ -227,16 +227,16 @@ struct Os_kernal
         return returnThis;
     }
 
-    void scheduleIt(const int totalCPU, char policy, int timeSlice)
+    void scheduleIt(const int totalCPU, char policy, int timeSlice, string outputFile)
     {
 
-        cout << "scheduling the " << policy << " with time slice " << timeSlice << endl;
+        cout << "\n\t :::: scheduling the " << policy << " with time slice " << timeSlice << " :::: \n"
+             << endl;
 
         if (policy == 'f')
         {
-            cout << "in" << endl;
-            kernalScheduler.FCFS(totalCPU);
-            cout << "out" << endl;
+
+            kernalScheduler.FCFS(totalCPU, outputFile);
         }
         else if (policy == 'r')
         {

@@ -36,15 +36,15 @@ int main(int argc, char *argv[])
                 // the scdeuling process
                 if (*argv[3] == 'r')
                 {
+
                     // if round robin then give the time slice
-                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], stoi(argv[4]));
+                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], stoi(argv[4]), argv[5]);
                 }
                 else if (*argv[3] == 'f' || *argv[3] == 'p')
                 {
-                    cout << "ja raha hu" << endl;
+
                     // the time slice will be -1
-                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], -1);
-                    cout << "aa raha hu" << endl;
+                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], -1, argv[4]);
                 }
                 else
                 {
