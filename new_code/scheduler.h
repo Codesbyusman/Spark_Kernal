@@ -26,6 +26,8 @@ list<PCB> runningProcess;  // the running process --running state
 list<PCB> terminatedState; // the terminated one
 queue<PCB> blockedState;   // the i/o busy processes
 
+int contextSwitchCount = 0;
+
 struct Scheduler
 {
     // Scheduler(/* args */);
@@ -43,22 +45,20 @@ struct Scheduler
 
         while (1)
         {
+
+            CPU Cpu;
+            // looking for the cpu
+            while (!freeCpu(cpuCount, Cpu))
+                ;
             if (!readyQueue.empty())
             {
-                CPU Cpu;
-                // looking for the cpu
-                while (!freeCpu(cpuCount, Cpu))
-                    ;
-
-                // changing status in the array
-
                 PCB process = readyQueue.front();
                 readyQueue.pop();
-
-                cout << "llll" << endl;
-                //     //     ;
-
                 contextSwitch(Cpu, &process);
+            }
+            else
+            {
+                cout << "idle" << endl;
             }
         }
     }
@@ -66,11 +66,14 @@ struct Scheduler
     void contextSwitch(CPU &assignTothis, PCB *process)
     {
 
-        cout << "\n context switch " << endl;
-        assignTothis.currentProcess = process;
-        assignTothis.status = false;
-        cout << "name" << assignTothis.name << endl;
-        assignTothis.currentProcess->printProcess();
+        if (process != NULL)
+        {
+            cout << "\n context switch " << endl;
+            assignTothis.currentProcess = process;
+            assignTothis.currentProcess->state = "running";
+            assignTothis.status = true;
+            contextSwitchCount++;
+        }
     }
 
     // will look for the free cpu
@@ -84,13 +87,36 @@ struct Scheduler
             // if cpu is free return this
             if (required.status)
             {
-
+                // as found thus make that cpu is occupied
+                required.status = false;
+                *cpuTraverse = required;
                 // returning
                 return true;
             }
         }
 
         // returning
+        return false;
+    }
+
+    bool freeTheCPU(CPU cpu)
+    {
+        CPU required;
+        // checking for the cpus
+        for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
+        {
+            required = *cpuTraverse;
+            // if cpu ids match free the cpu it's work is done
+            if (required.id == cpu.id)
+            {
+                // as found thus make that cpu is occupied
+                required.status = true;
+                required.currentProcess = NULL;
+                *cpuTraverse = required;
+                return true;
+            }
+        }
+
         return false;
     }
 };

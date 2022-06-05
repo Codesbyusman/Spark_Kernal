@@ -63,7 +63,6 @@ void *updateReadyQueue(void *args)
                     theFirstinNew = newState.front();
                     if (theFirstinNew.arrivalTime == stod(compare))
                     {
-                        cout << i << "." << j << " " << theFirstinNew.arrivalTime << endl;
                         newState.pop_front();
                         // and pushing to the readyQueue
                         readyQueue.push(theFirstinNew);
@@ -72,6 +71,20 @@ void *updateReadyQueue(void *args)
             }
         }
     }
+
+    return NULL;
+}
+
+struct argsSchedule
+{
+    char schedulingPolicy;
+    int timeSlice;
+};
+
+void *schedule(void *args)
+{
+
+    argsSchedule *policy = (argsSchedule *)args; // decoding the arguments
 
     return NULL;
 }
@@ -206,7 +219,7 @@ struct Os_kernal
                 kernalCPUs.push_back(C);
 
                 // creating threads
-                pthread_create(&cpuIds[i], NULL, functionPointer, &C);
+                pthread_create(&cpuIds[i], NULL, functionPointer, &kernalCPUs.back());
 
                 // sleep(1);
             }
@@ -268,8 +281,6 @@ struct Os_kernal
     {
 
         cout << "scheduling the " << policy << " with time slice " << timeSlice << endl;
-
-        cout << "y loo" << endl;
 
         if (policy == 'f')
         {

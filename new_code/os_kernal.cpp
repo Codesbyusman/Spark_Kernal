@@ -97,5 +97,26 @@ void *cpuProcessors(void *args)
 {
 
     CPU *theCpu = (CPU *)args;
-    theCpu->displayCPU();
+
+    list<CPU>::iterator cpuTraverse;
+    CPU iterating;
+
+    // checking for the cpus
+    for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
+    {
+        iterating = *cpuTraverse;
+
+        if (iterating.id == theCpu->id)
+        {
+            *theCpu = *cpuTraverse;
+            break;
+        }
+    }
+
+    while (1)
+    {
+
+        sleep(1);
+        Spark_Kernal.kernalScheduler.freeTheCPU(*theCpu);
+    }
 }
