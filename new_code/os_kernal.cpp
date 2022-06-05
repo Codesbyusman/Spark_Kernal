@@ -33,8 +33,6 @@ int main(int argc, char *argv[])
                 // starting the kernal
                 Spark_Kernal.start(argv[1], &cpuProcessors, cpuId, cpuCount);
 
-                sleep(1);
-
                 // the scdeuling process
                 if (*argv[3] == 'r')
                 {
@@ -43,8 +41,10 @@ int main(int argc, char *argv[])
                 }
                 else if (*argv[3] == 'f' || *argv[3] == 'p')
                 {
+                    cout << "ja raha hu" << endl;
                     // the time slice will be -1
                     Spark_Kernal.scheduleIt(cpuCount, *argv[3], -1);
+                    cout << "aa raha hu" << endl;
                 }
                 else
                 {
@@ -101,21 +101,20 @@ void *cpuProcessors(void *args)
     list<CPU>::iterator cpuTraverse;
     CPU iterating;
 
-    // checking for the cpus
-    for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
+    // // checking for the cpus
+    // for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); ++cpuTraverse)
+    // {
+    //     iterating = *cpuTraverse;
+
+    //     if (iterating.id == theCpu->id)
+    //     {
+    //         *theCpu = *cpuTraverse;
+    //         break;
+    //     }
+    // }
+
+    while (poped < processCount)
     {
-        iterating = *cpuTraverse;
-
-        if (iterating.id == theCpu->id)
-        {
-            *theCpu = *cpuTraverse;
-            break;
-        }
-    }
-
-    while (1)
-    {
-
         sleep(1);
         Spark_Kernal.kernalScheduler.freeTheCPU(*theCpu);
     }

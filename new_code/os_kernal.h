@@ -15,34 +15,6 @@ using namespace std;
 
 #include "scheduler.h"
 
-// // the cpu structure
-// struct CPU
-// {
-//     /* data */
-//     pthread_t id;        // the id of thread
-//     string name;         // name of the cpu thread
-//     PCB *currentProcess; // the current running process
-//     // PCB *previousProcess; // the previous excuted
-//     bool status; // shows the status of if the status true the cpu is free
-
-//     void displayCPU()
-//     {
-//         cout << "\n\n id : " << id << endl;
-//         cout << "name : " << name << endl;
-//         cout << "status : " << status << endl;
-//         if (status)
-//         {
-//             cout << "Idle Process" << endl;
-//         }
-//         else
-//         {
-//             currentProcess->printProcess();
-//         }
-
-//         cout << endl;
-//     }
-// };
-
 // for the thread making of the updating the ready queue
 void *updateReadyQueue(void *args)
 {
@@ -51,40 +23,22 @@ void *updateReadyQueue(void *args)
     {
 
         PCB theFirstinNew;
-        string compare;
+
         // if time matches then going to the ready
-        for (int i = 0; i < 10; i++)
+        // time_t currentTime;
+        if (!newState.empty())
         {
-            for (int j = 0; j < 10; j++)
+            // currentTime = time(NULL);
+            theFirstinNew = newState.front();
+            if (theFirstinNew.arrivalTime <= timeStart)
             {
-                if (!newState.empty())
-                {
-                    compare = to_string(i) + "." + to_string(j);
-                    theFirstinNew = newState.front();
-                    if (theFirstinNew.arrivalTime == stod(compare))
-                    {
-                        newState.pop_front();
-                        // and pushing to the readyQueue
-                        readyQueue.push(theFirstinNew);
-                    }
-                }
+
+                newState.pop_front();
+                // and pushing to the readyQueue
+                readyQueue.push(theFirstinNew);
             }
         }
     }
-
-    return NULL;
-}
-
-struct argsSchedule
-{
-    char schedulingPolicy;
-    int timeSlice;
-};
-
-void *schedule(void *args)
-{
-
-    argsSchedule *policy = (argsSchedule *)args; // decoding the arguments
 
     return NULL;
 }
@@ -97,12 +51,6 @@ struct Os_kernal
     // the iterator
     list<CPU>::iterator cpuTraverse;
     list<PCB>::iterator pcbTraverse;
-
-    Os_kernal()
-    {
-
-        pthread_create(&updateId, NULL, updateReadyQueue, NULL);
-    }
 
     // making the process
     void makeProcess(string info, const int id)
@@ -204,12 +152,14 @@ struct Os_kernal
             // till now the new queue made thus sorting the queue
             // newState.sort();
 
-            CPU C;
+            processCount = newState.size();
+
+            pthread_create(&updateId, NULL, updateReadyQueue, NULL);
 
             // now making the cpus
             for (int i = 0; i < totalCPU; i++)
             {
-
+                CPU C;
                 // making the cpu
                 C.name = "CPU - 0" + to_string(i + 1);
                 C.id = i;
@@ -220,8 +170,6 @@ struct Os_kernal
 
                 // creating threads
                 pthread_create(&cpuIds[i], NULL, functionPointer, &kernalCPUs.back());
-
-                // sleep(1);
             }
 
             // check queues
@@ -248,7 +196,7 @@ struct Os_kernal
         PCB iteration;
 
         // checking for the cpus
-        for (pcbTraverse = toPrint.begin(); pcbTraverse != toPrint.end(); ++pcbTraverse)
+        for (pcbTraverse = toPrint.begin(); pcbTraverse != toPrint.end(); pcbTraverse++)
         {
             iteration = *pcbTraverse;
             iteration.printProcess();
@@ -284,8 +232,9 @@ struct Os_kernal
 
         if (policy == 'f')
         {
-
+            cout << "in" << endl;
             kernalScheduler.FCFS(totalCPU);
+            cout << "out" << endl;
         }
         else if (policy == 'r')
         {
