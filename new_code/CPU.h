@@ -1,3 +1,8 @@
+/*
+    Muhammad usman shahid 20i-1797
+    Ghulam Murtaza 20i-0957
+ */
+
 #include "process.h"
 
 // the cpu structure
