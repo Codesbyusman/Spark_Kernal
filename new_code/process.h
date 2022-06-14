@@ -1,3 +1,7 @@
+/*
+    Muhammad usman shahid 20i-1797
+    Ghulam Murtaza 20i-0957
+ */
 
 #include <iostream>
 #include <cstdlib>
@@ -23,6 +27,7 @@ struct PCB
     double inputOutputTime;  // the i/o time
     string processType;      // see cpu or i/o
     int pirority;            // the prirority
+    string state;            // will tell procees in which state
 
     void printProcess()
     {

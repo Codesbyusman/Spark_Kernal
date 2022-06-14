@@ -1,0 +1,21 @@
+ Time      Ready   Running   waiting      CPU 1           I/O Queue
+
+     0         1         0         0           idle                NULL
+    10         0         1         0       I-Chrome                NULL
+    13         6         1         0          C-g++                NULL
+    24         5         1         0        C-Mongo                NULL
+    37         4         1         0      C-SqlLite                NULL
+    41         3         1         0     C-GraphLib                NULL
+    56         2         1         0      C-TreeGen                NULL
+    61         1         1         0         I-Word                NULL
+    69         0         1         0                               NULL
+
+	 :::::::::::::::::::::::::::::::::::::::: 
+
+
+	    # of context switching : 14
+	    Total Execution Time : 69
+	    Total waiting in ready state : 153
+
+	 :::::::::::::::::::::::::::::::::::::::: 
+

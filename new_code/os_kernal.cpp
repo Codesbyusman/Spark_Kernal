@@ -1,3 +1,10 @@
+/*
+    Muhammad usman shahid 20i-1797
+    Ghulam Murtaza 20i-0957
+ */
+
+
+
 #include "os_kernal.h"
 
 // the link list and queues
@@ -34,7 +41,23 @@ int main(int argc, char *argv[])
                 Spark_Kernal.start(argv[1], &cpuProcessors, cpuId, cpuCount);
 
                 // the scdeuling process
-                Spark_Kernal.scheduleIt(&cpuProcessors, cpuCount);
+                if (*argv[3] == 'r')
+                {
+
+                    // if round robin then give the time slice
+                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], stoi(argv[4]), argv[5]);
+                }
+                else if (*argv[3] == 'f' || *argv[3] == 'p')
+                {
+
+                    // the time slice will be -1
+                    Spark_Kernal.scheduleIt(cpuCount, *argv[3], -1, argv[4]);
+                }
+                else
+                {
+                    cout << "\n\t\t       :::::::: Wrong Scheduling policy :::::::: " << endl;
+                    goto error;
+                }
             }
             else
             {
@@ -71,6 +94,8 @@ int main(int argc, char *argv[])
         pthread_join(cpuId[i], NULL);
     }
 
+    // pthread_join(updateId, NULL);
+
     return 0;
 }
 
@@ -79,5 +104,32 @@ void *cpuProcessors(void *args)
 {
 
     CPU *theCpu = (CPU *)args;
-    theCpu->displayCPU();
+
+    list<CPU>::iterator cpuTraverse;
+
+    while (poped < processCount)
+    {
+        CPU iterate;
+        // checking for the cpus
+        for (cpuTraverse = kernalCPUs.begin(); cpuTraverse != kernalCPUs.end(); cpuTraverse++)
+        {
+            iterate = *cpuTraverse;
+            if (theCpu->id == iterate.id)
+            {
+                *theCpu = *cpuTraverse;
+                break;
+            }
+        }
+
+        sleep(2);
+
+        // cout << theCpu->name << " thread " << endl;
+        pthread_mutex_lock(&cpuLock);
+        Spark_Kernal.kernalScheduler.freeTheCPU(*theCpu);
+        if (theCpu->currentProcess != NULL)
+            Spark_Kernal.kernalScheduler.terminate(*theCpu->currentProcess);
+        pthread_mutex_unlock(&cpuLock);
+    }
+
+    return NULL;
 }
